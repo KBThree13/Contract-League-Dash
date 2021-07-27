@@ -14,10 +14,18 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from pyasn1.type.univ import Null
+from dotenv import load_dotenv
 
-import schedule
+import os
 import time
+import json
 
+load_dotenv()
+
+import json
+
+with open('managers.json') as file:
+    managers = json.load(file)
 
 ###############################
 #INITIALIZE GOOGLE SHEETS API
@@ -30,14 +38,16 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SAMPLE_SPREADSHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
 SAMPLE_RANGE_NAME = 'Class Data!A2:E'
 #Contract League Spreadsheet
-SPREADSHEET_ID = ''
+SPREADSHEET_ID = os.getenv('sheet_Id')
 RANGE_NAME = '!C17:C136'
 CLOCK_RANGE = 'League View!C11'
 BID_RANGE = 'Bidding Backend!B7:H7'
 BID_RANGE_TEST = 'Bidding Backend!B9:H9'
 AUCTION_ARCHIVE_RANGE = 'Auction Archive!J11:P11'
 
-MANAGER_NAMES = []
+
+
+MANAGER_NAMES = managers['managers']
 
 creds = None
     # The file token.json stores the user's access and refresh tokens, and is
@@ -81,14 +91,18 @@ df = pd.DataFrame({
 fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
 
 app.layout = html.Div(children=[
+    html.H1(id='app-title', children="Contract League Draft Control"),
+    dcc.Input(id='timer-length-input', type='number', placeholder=30),
     html.Button(id='timer-start-button', children="Start Timer"),
     html.Button(id='draft-player-button', children="Draft Player"),
     html.Button(id='clear-data-button', children="Clear Bids"),
+    html.H2(id='status-messages', children='Scrip Status Messages:'),
     html.Div(id='sheet-clear-status'),
     html.Div(id='clock-status'),
     html.Div(id='drafted-player-status')
 ])
 
+#Button Click Callback: Clear Bid Data
 @app.callback(
     Output(component_id='sheet-clear-status', component_property='children'),
     Input(component_id='clear-data-button', component_property='n_clicks'),
@@ -100,17 +114,20 @@ def update_output(n_clicks):
         response = clearSheet()
         return "{} - Cleared Sheets!".format(response["clearedRange"])
 
+#Button Click Callback: Start Timer
 @app.callback(
     Output(component_id='clock-status', component_property='children'),
     Input(component_id='timer-start-button', component_property='n_clicks'),
+    Input('timer-length-input', "value")
 )
-def clock_update(n_clicks):
+def clock_update(n_clicks, timerLength):
     if n_clicks is None:
         raise PreventUpdate
     else:
-        response = startTimer(120)
+        response = startTimer(timerLength)
         return "Timer Complete!"
 
+#Button Click Callback: Draft Player
 @app.callback(
     Output(component_id='drafted-player-status', component_property='children'),
     Input(component_id='draft-player-button', component_property='n_clicks'),
@@ -123,6 +140,9 @@ def draft_update(n_clicks):
         return response
 
 def clearSheet():
+    """
+    Clears the bid information on each tab of the draft sheet
+    """
     for name in MANAGER_NAMES:
         EDIT_RANGE = name + RANGE_NAME
         response = sheet.values().clear(spreadsheetId=SPREADSHEET_ID, range=EDIT_RANGE).execute()
@@ -149,7 +169,17 @@ def startTimer(t):
         t-=1
         request = sheet.values().update(spreadsheetId=SPREADSHEET_ID, range=CLOCK_RANGE, valueInputOption=value_input_option, body=value_range_body).execute()
         time.sleep(1)
-        
+    
+    clock[0] = "Final Bids!"
+    value_range_body = {
+            "range": CLOCK_RANGE,
+            "values": [
+                clock
+                ]
+
+            }
+    request = sheet.values().update(spreadsheetId=SPREADSHEET_ID, range=CLOCK_RANGE, valueInputOption=value_input_option, body=value_range_body).execute()
+
     return response
 
 def draftCurrentPlayer():
