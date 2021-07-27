@@ -30,7 +30,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SAMPLE_SPREADSHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
 SAMPLE_RANGE_NAME = 'Class Data!A2:E'
 #Contract League Spreadsheet
-SPREADSHEET_ID = '14bwtjF6HcA0htqClbFukR2Px29LAXAeIEW2wZHrlPU4'
+SPREADSHEET_ID = ''
 RANGE_NAME = '!C17:C136'
 CLOCK_RANGE = 'League View!C11'
 BID_RANGE = 'Bidding Backend!B7:H7'
