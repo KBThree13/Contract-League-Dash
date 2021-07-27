@@ -37,7 +37,7 @@ BID_RANGE = 'Bidding Backend!B7:H7'
 BID_RANGE_TEST = 'Bidding Backend!B9:H9'
 AUCTION_ARCHIVE_RANGE = 'Auction Archive!J11:P11'
 
-MANAGER_NAMES = ['Aaron Kaplan', 'Connor Sage', 'Eric Innes', 'Jeff Cullinane', 'Josh Fernandes', 'Kevin Roehner', 'Kyle Brogan', 'Mark Daniel', 'Matthew Starr', 'Ramzi Takieddine', 'Rick Faulkner','Sam Stoughton']
+MANAGER_NAMES = []
 
 creds = None
     # The file token.json stores the user's access and refresh tokens, and is
