@@ -44,7 +44,8 @@ CLOCK_RANGE = 'League View!C11'
 BID_RANGE = 'Bidding Backend!B7:H7'
 BID_RANGE_TEST = 'Bidding Backend!B9:H9'
 AUCTION_ARCHIVE_RANGE = 'Auction Archive!J11:P11'
-
+NEXT_PLAYER_RANGE = 'League View!C6'
+AUCTION_BLOCK_RANGE = 'League View!C9'
 
 
 MANAGER_NAMES = managers['managers']
@@ -95,11 +96,11 @@ app.layout = html.Div(children=[
     dcc.Input(id='timer-length-input', type='number', placeholder=30),
     html.Button(id='timer-start-button', children="Start Timer"),
     html.Button(id='draft-player-button', children="Draft Player"),
-    html.Button(id='clear-data-button', children="Clear Bids"),
     html.H2(id='status-messages', children='Scrip Status Messages:'),
     html.Div(id='sheet-clear-status'),
     html.Div(id='clock-status'),
-    html.Div(id='drafted-player-status')
+    html.Div(id='drafted-player-status'),
+    html.Button(id='clear-data-button', children="Clear Bids")
 ])
 
 #Button Click Callback: Clear Bid Data
@@ -145,11 +146,27 @@ def clearSheet():
     """
     for name in MANAGER_NAMES:
         EDIT_RANGE = name + RANGE_NAME
-        response = sheet.values().clear(spreadsheetId=SPREADSHEET_ID, range=EDIT_RANGE).execute()
-    return response
+        response1 = sheet.values().clear(spreadsheetId=SPREADSHEET_ID, range=EDIT_RANGE).execute()
+    
+    playerRange = 'League View!C9'
+    response2 = sheet.values().clear(spreadsheetId = SPREADSHEET_ID, range=playerRange).execute()
+
+    return response1
 
 def startTimer(t):
-    response = sheet.values().clear(spreadsheetId=SPREADSHEET_ID, range=CLOCK_RANGE).execute()
+
+    response1 = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=NEXT_PLAYER_RANGE).execute()
+
+    player = response1.get("values", [])
+    
+    value_range_body = {
+                "range": AUCTION_BLOCK_RANGE,
+                "values": [
+                    player[0]
+                    ]
+                }
+
+    response = sheet.values().update(spreadsheetId=SPREADSHEET_ID, range=AUCTION_BLOCK_RANGE, valueInputOption='USER_ENTERED', body=value_range_body).execute()
 
     clock = ['']
 
@@ -203,20 +220,9 @@ def draftCurrentPlayer():
             ]
         }
 
+        #write to the Auction Archive
         write_result = sheet.values().update(spreadsheetId=SPREADSHEET_ID, range=newRange, valueInputOption=value_input_option, body=value_range_body).execute()
         return "Player: {} was saved to the auction archive!".format(values[0][1])
-
-    
-    
-    
-
-    #Write to the Auction Sheet
-    
-
-    #Clear player auction information from bid reference
-
-
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
